@@ -1,0 +1,15 @@
+version: '2'
+
+services:
+  server:
+    build: ./
+    image: brorbw/server:latest
+    ports:
+      - "8080:8080"
+    container_name: server
+  mongodata:
+    container_name: mongo
+    image: mongo:latest
+    volumes:
+      - /data/db
+    command: --smallfiles --noprealloc
