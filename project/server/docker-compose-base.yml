@@ -7,6 +7,8 @@ services:
     ports:
       - "8080:8080"
     container_name: server
+    volumes:
+      - ./videos:/videos
   mongodata:
     container_name: mongo
     image: mongo:latest
