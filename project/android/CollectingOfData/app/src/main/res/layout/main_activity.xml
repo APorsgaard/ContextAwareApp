@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context="com.larusaarhus.collectingofdata.MainActivity">
+
+    <Button
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/start"
+        android:id="@+id/button1"
+        android:onClick="startRecording" />
+
+    <Button
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/stop"
+        android:id="@+id/button2"
+        android:onClick="stopRecording"
+        android:layout_below="@+id/button1"
+        android:layout_alignParentStart="true" />
+
+    <Button
+        style="?android:attr/buttonStyleSmall"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="calculate"
+        android:id="@+id/button"
+        android:layout_below="@+id/button2"
+        android:layout_alignParentStart="true" />
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:textAppearance="?android:attr/textAppearanceMedium"
+        android:text="Calculations go here"
+        android:id="@+id/textView"
+        android:layout_below="@+id/button"
+        android:layout_alignParentStart="true"
+        android:minLines="3" />
+
+</RelativeLayout>
