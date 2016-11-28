@@ -15,10 +15,14 @@ import android.util.Log;
 import android.view.View;
 import android.widget.TextView;
 
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
+import java.io.FileReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.util.ArrayList;
 
@@ -33,9 +37,12 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     private int fileIncrementer;
     private AsyncTask myAsyncTask;
     private AsyncTask calcTask;
+    private AsyncTask translate;
     private boolean start;
     private SensorManager sensorManager;
     private ArrayList<ArrayList> data;
+    private ArrayList<Position> csv;
+    private static int NUMBER_OFF_FILES = 0; //the number of files go here
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -45,9 +52,9 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         buffer1 = new ArrayList<>();
         buffer2 = new ArrayList<>();
         data = new ArrayList<>();
+        csv = new ArrayList<>();
         start = false;
         sensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
-
         SharedPreferences sharedPref = MainActivity.this.getPreferences(Context.MODE_PRIVATE);
         fileIncrementer = sharedPref.getInt("incrementor", 0);
     }
@@ -252,11 +259,11 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 
         @Override
         protected void onPostExecute(ArrayList arrayList) {
-            calculate(arrayList);
+            calculateBack(arrayList);
         }
     }
 
-    public void calculate(ArrayList<Position> arrayList){
+    public void calculateBack(ArrayList<Position> arrayList){
         TextView textView = (TextView)findViewById(R.id.textView);
 
         textView.setText("");
@@ -266,4 +273,53 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 
     }
 
+    public void calculate(View view){
+        calcTask = new TranslateData().execute();
+
+    }
+    private class TranslateData extends AsyncTask {
+
+        @Override
+        protected Object doInBackground(Object[] objects) {
+            FileInputStream is;
+            BufferedReader reader;
+            String pathToSave = getExternalFilesDir(null).getPath();
+            int i = 0;
+            while (i < fileIncrementer) {
+                final File file = new File(pathToSave, "csv-" + i + ".csv");
+                try {
+                    if (file.exists()) {
+                        is = new FileInputStream(file);
+                        reader = new BufferedReader(new InputStreamReader(is));
+                        String line = reader.readLine();
+                        while (line != null) {
+                            line = reader.readLine();
+                            String[] lines = line.split(",");
+                            csv.add(new Position(Long.valueOf(lines[0]), Double.valueOf(lines[1]), Double.valueOf(lines[2]), Double.valueOf(lines[3])));
+                        }
+                    }
+                } catch (IOException e) {
+                    Log.d("Translater", "Something went wrong in the file reader");
+                    e.printStackTrace();
+                }
+            }
+            int j = 0;
+            try {
+                File file = new File(pathToSave, "deviation-" + fileIncrementer + ".csv");
+                FileOutputStream stream = new FileOutputStream(file);
+                while (j < csv.size() / 128) {
+                    ArrayList<Position> toCal = (ArrayList<Position>) csv.subList(j, j + 127);
+                    String output = minMagnitude(toCal) + "," + maxMagnitude(toCal) + "," + stdDiviation(toCal);
+                    stream.write(output.getBytes());
+                }
+            } catch (FileNotFoundException e) {
+                Log.d("Translator", "Something went wrong in the file writer");
+                e.printStackTrace();
+            } catch (IOException e) {
+                Log.d("Translator", "Something went wrong in the file writer");
+                e.printStackTrace();
+            }
+            return null;
+        }
+    }
 }
