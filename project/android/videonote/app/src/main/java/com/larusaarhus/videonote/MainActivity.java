@@ -6,11 +6,12 @@ import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.os.AsyncTask;
-import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 
-import java.io.FileInputStream;
+import com.mashape.unirest.http.Unirest;
+
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.util.ArrayList;
@@ -20,7 +21,7 @@ import weka.classifiers.trees.J48;
 import weka.core.Attribute;
 import weka.core.DenseInstance;
 import weka.core.Instances;
-import weka.experiment.Task;
+import weka.core.pmml.Array;
 
 public class MainActivity extends AppCompatActivity implements SensorEventListener {
 
@@ -37,11 +38,21 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        sensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
         loadModel();
+        sensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
+        buffer1 = new ArrayList<>();
+        buffer2 = new ArrayList<>();
     }
 
-
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        try {
+            Unirest.shutdown();
+        } catch (IOException e){
+            e.printStackTrace();
+        }
+    }
 
     private void loadModel(){
         //loading the model
@@ -64,8 +75,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         //things to be done on start
         super.onStart();
         Sensor accel = sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
-        sensorManager.registerListener(this, accel,
-                SensorManager.SENSOR_DELAY_FASTEST);
+        sensorManager.registerListener(this, accel, SensorManager.SENSOR_DELAY_FASTEST);
     }
 
 
@@ -103,13 +113,33 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 
     }
 
-    private class BackgroundTask extends AsyncTask{
+    private class BackgroundTask extends AsyncTask<ArrayList, Double, Double>{
         //background thread
 
         @Override
-        protected Void doInBackground(Object[] objects) {
-            Instances testData = getInstance((double) objects[0],(double) objects[1],(double) objects[2]);
-            double pred = classifier.classifyInstance(testData.instance(0)); //i dont know why this is there
+        protected Double doInBackground(ArrayList[] objects) {
+            double time = ((Position)objects[0].get(0)).getTimestamp();
+            double max = maxMagnitude(objects[0]);
+            double min = minMagnitude(objects[0]);
+            double std = stdDiviation(objects[0]);
+            //Log.d("Classification", "doInBackground" + " :" + max + " : " + min + " : " + std);
+            Instances testData = getInstance(time,max,min,std);
+            Instances copy = testData;
+            double pred = -1;
+            try {
+                testData.setClassIndex(testData.numAttributes()-1);
+                pred = classifier.classifyInstance(testData.firstInstance());
+                copy.firstInstance().setClassValue(pred);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            Log.d("Classification", "Lable : " + copy.firstInstance().classAttribute());
+            return pred;
+        }
+
+        @Override
+        protected void onPostExecute(Double o) {
+            Log.d("Classification", "onPostExecute: " + o);
         }
     }
 
@@ -161,7 +191,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
             sum2 = Math.pow(magnitude(p) - avg, 2);
         }
         diviation = Math.sqrt((1 / (n - 1)) * sum2);
-        Log.d("diviation", "n: " + n + " sum: " + sum + " avg: " + avg + " sum2: " + sum2 + " diviation: " + diviation);
+        //Log.d("diviation", "n: " + n + " sum: " + sum + " avg: " + avg + " sum2: " + sum2 + " diviation: " + diviation);
         return diviation;
     }
 
@@ -169,7 +199,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         return Math.abs(Math.sqrt(Math.pow(p.getX(), 2) + (Math.pow(p.getY(), 2) + (Math.pow(p.getZ(), 2)))));
     }
 
-    public Instances getInstance(Double max, Double min, Double std) {
+    public Instances getInstance(Double time, Double max, Double min, Double std) {
 
         //gettng the instances
 
@@ -177,21 +207,26 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         ArrayList<String> classVal = new ArrayList<String>();
 
 
-        classVal.add("something");		// here put in your first class label
-        atts.add(new Attribute("@@class@@", classVal));
 
+        atts.add(new Attribute("time"));
         atts.add(new Attribute("max"));
         atts.add(new Attribute("min"));
         atts.add(new Attribute("std"));
+        classVal.add("BIKE");
+        classVal.add("POCKET");
+        classVal.add("HAND");
+        classVal.add("CAR");
+        classVal.add("TRAIN");
+        atts.add(new Attribute("@@class@@", classVal));
 
         Instances dataRaw = new Instances("TestInstances", atts, 0);
         double[] instanceValue = new double[dataRaw.numAttributes()];
 
-        instanceValue[0] = 0;
-
-        instanceValue[1] = max;
-        instanceValue[2] = min;
-        instanceValue[3] = std;
+        //instanceValue[0] = time;
+        instanceValue[0] = max;
+        instanceValue[1] = min;
+        instanceValue[2] = std;
+        instanceValue[3] = 0;
 
         dataRaw.add(new DenseInstance(1.0, instanceValue));
 
@@ -201,5 +236,8 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         return dataRaw;
 
     }
+
+
+
 }
 
