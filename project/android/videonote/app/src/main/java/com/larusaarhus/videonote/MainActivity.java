@@ -44,6 +44,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 
 
     private void loadModel(){
+        //loading the model
         try {
             ObjectInputStream ois = new ObjectInputStream(
                     getAssets().open("FinalModel.model"));
@@ -60,6 +61,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 
     @Override
     protected void onStart() {
+        //things to be done on start
         super.onStart();
         Sensor accel = sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
         sensorManager.registerListener(this, accel,
@@ -70,6 +72,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     /* ---- SensorEvent ---- */
     @Override
     public void onSensorChanged(SensorEvent sensorEvent) {
+        //when there is data from the sensor
             long timeInMillis = (new Date()).getTime()
                     + (sensorEvent.timestamp - System.nanoTime()) / 1000000L;
             float[] values = sensorEvent.values;
@@ -101,11 +104,12 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     }
 
     private class BackgroundTask extends AsyncTask{
+        //background thread
 
         @Override
         protected Void doInBackground(Object[] objects) {
             Instances testData = getInstance((double) objects[0],(double) objects[1],(double) objects[2]);
-            double pred = classifier.classifyInstance(testData.instance(0));
+            double pred = classifier.classifyInstance(testData.instance(0)); //i dont know why this is there
         }
     }
 
@@ -167,6 +171,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 
     public Instances getInstance(Double max, Double min, Double std) {
 
+        //gettng the instances
 
         ArrayList<Attribute> atts = new ArrayList<Attribute>(4);
         ArrayList<String> classVal = new ArrayList<String>();
