@@ -8,6 +8,7 @@ android {
         applicationId "com.larusaarhus.final_project"
         minSdkVersion 23
         targetSdkVersion 23
+        multiDexEnabled true
         versionCode 1
         versionName "1.0"
     }

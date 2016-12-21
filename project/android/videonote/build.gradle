@@ -19,6 +19,9 @@ allprojects {
         maven{
             url 'https://raw.github.com/zeeshanejaz/unirest-android/mvn-repo'
         }
+        maven{
+            url 'https://repo.spring.io/libs-milestone'
+        }
     }
 
 }
@@ -26,3 +29,4 @@ allprojects {
 task clean(type: Delete) {
     delete rootProject.buildDir
 }
+

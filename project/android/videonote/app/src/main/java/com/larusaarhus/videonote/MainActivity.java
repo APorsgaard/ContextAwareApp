@@ -1,16 +1,27 @@
 package com.larusaarhus.videonote;
 
+import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.content.Context;
+import android.content.Intent;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.Vibrator;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v4.app.NotificationCompat;
 import android.util.Log;
+import android.view.View;
 
 import com.mashape.unirest.http.Unirest;
+
+import org.json.JSONException;
+import org.json.JSONObject;
+import org.springframework.http.converter.StringHttpMessageConverter;
+import org.springframework.web.client.RestTemplate;
 
 import java.io.IOException;
 import java.io.ObjectInputStream;
@@ -237,7 +248,71 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 
     }
 
+    public void notifitation(View view){
+        getNotification();
+        Intent resultIntent = this.getIntent();
+// no need to create an artificial back stack.
+        PendingIntent resultPendingIntent =
+                PendingIntent.getActivity(
+                        this,
+                        0,
+                        resultIntent,
+                        PendingIntent.FLAG_UPDATE_CURRENT
+                );
 
+        NotificationCompat.Builder mBuilder =
+                new NotificationCompat.Builder(this)
+                        .setSmallIcon(R.drawable.ic_video)
+                        .setContentTitle("My notification")
+                        .setContentText("Hello World!");
+        mBuilder.setContentIntent(resultPendingIntent);
+
+        int mNotificationId = 001;
+        // Gets an instance of the NotificationManager service
+        NotificationManager mNotifyMgr = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
+        // Builds the notification and issues it.
+        mNotifyMgr.notify(mNotificationId, mBuilder.build());
+
+    }
+    public void vibrate(View view){
+        Vibrator v = (Vibrator) this.getApplicationContext().getSystemService(Context.VIBRATOR_SERVICE);
+        // Vibrate for 500 milliseconds
+        v.vibrate(500);
+    }
+
+    public void getNotification(){
+        backgroundtask = new BaackgroundTask().execute();
+    }
+
+
+    private class BaackgroundTask extends AsyncTask<Void, String, String>{
+
+        @Override
+        protected String doInBackground(Void... voids) {
+            // The connection URL
+            String url = "http://videoitnow.com:8080/notification";
+
+// Create a new RestTemplate instance
+            RestTemplate restTemplate = new RestTemplate();
+
+// Add the String message converter
+            restTemplate.getMessageConverters().add(new StringHttpMessageConverter());
+
+// Make the HTTP GET request, marshaling the response to a String
+            String result = restTemplate.getForObject(url, String.class, "Android");
+            JSONObject re;
+            Log.d("HTTP", "getNotification: " + result);
+            try {
+
+                re = new JSONObject(result);
+                Log.d("HTTP", "As JSON: " + re.getString("title") + " : " + re.getString("message"));
+            } catch (JSONException e){
+                e.printStackTrace();
+            }
+
+            return result;
+        }
+    }
 
 }
 

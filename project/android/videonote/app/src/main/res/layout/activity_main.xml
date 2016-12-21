@@ -12,5 +12,24 @@
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Hello World!" />
+        android:text="Hello World!"
+        android:id="@+id/textView" />
+
+    <Button
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Notification"
+        android:id="@+id/button"
+        android:layout_centerVertical="true"
+        android:onClick="notifitation"
+        android:layout_toEndOf="@+id/textView" />
+    <Button
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="vibrate"
+        android:id="@+id/button1"
+        android:onClick="vibrate"
+        android:layout_below="@+id/button"
+        android:layout_alignEnd="@+id/button" />
+
 </RelativeLayout>
